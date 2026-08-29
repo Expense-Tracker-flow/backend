@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: flow-backend-app
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=jdbc:postgresql://ep-lingering-bird-az4magcy-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      - DB_USERNAME=neondb_owner
+      - DB_PASSWORD=npg_uLIyg3RBEMw9
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=uksayoojjayarajan@gmail.com
+      - SMTP_PASSWORD=uagfeylnvdhoeems
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      - CORS_ALLOWED_ORIGINS=https://frontend-lilac-iota-37.vercel.app,http://localhost:3000
