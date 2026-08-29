@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,11 +47,14 @@ class TransactionServiceTest {
 
     private User testUser;
     private Category testCategory;
+    private final UUID userId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private final UUID categoryId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+    private final UUID txId = UUID.fromString("33333333-3333-3333-3333-333333333333");
 
     @BeforeEach
     void setUp() {
         testUser = User.builder()
-                .id(1L)
+                .id(userId)
                 .email("user@flow.app")
                 .fullName("John Doe")
                 .passwordHash("hashed")
@@ -58,7 +62,7 @@ class TransactionServiceTest {
                 .build();
 
         testCategory = Category.builder()
-                .id(10L)
+                .id(categoryId)
                 .name("Food & Dining")
                 .type(CategoryType.EXPENSE)
                 .isSystem(true)
@@ -72,17 +76,17 @@ class TransactionServiceTest {
                 .type(TransactionType.EXPENSE)
                 .amount(new BigDecimal("450.50"))
                 .description("Dinner with friends")
-                .categoryId(10L)
+                .categoryId(categoryId)
                 .transactionDate(LocalDate.now())
                 .paymentMethod(PaymentMethod.UPI)
                 .notes("Splits with Alice")
                 .build();
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(categoryService.getCategoryEntity(10L, 1L)).thenReturn(testCategory);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        when(categoryService.getCategoryEntity(categoryId, userId)).thenReturn(testCategory);
 
         Transaction savedTx = Transaction.builder()
-                .id(100L)
+                .id(txId)
                 .user(testUser)
                 .category(testCategory)
                 .type(TransactionType.EXPENSE)
@@ -95,10 +99,10 @@ class TransactionServiceTest {
 
         when(transactionRepository.save(any(Transaction.class))).thenReturn(savedTx);
 
-        TransactionResponse response = transactionService.createTransaction(1L, request);
+        TransactionResponse response = transactionService.createTransaction(userId, request);
 
         assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(100L);
+        assertThat(response.getId()).isEqualTo(txId);
         assertThat(response.getAmount()).isEqualByComparingTo(new BigDecimal("450.50"));
         assertThat(response.getDescription()).isEqualTo("Dinner with friends");
         assertThat(response.getType()).isEqualTo(TransactionType.EXPENSE);
@@ -110,6 +114,7 @@ class TransactionServiceTest {
     @Test
     @DisplayName("Throws ResourceNotFoundException when non-existent user creates transaction")
     void createTransaction_UserNotFound() {
+        UUID nonExistentId = UUID.fromString("99999999-9999-9999-9999-999999999999");
         CreateTransactionRequest request = CreateTransactionRequest.builder()
                 .type(TransactionType.EXPENSE)
                 .amount(new BigDecimal("100.00"))
@@ -117,9 +122,9 @@ class TransactionServiceTest {
                 .transactionDate(LocalDate.now())
                 .build();
 
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+        when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> transactionService.createTransaction(999L, request))
+        assertThatThrownBy(() -> transactionService.createTransaction(nonExistentId, request))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }
