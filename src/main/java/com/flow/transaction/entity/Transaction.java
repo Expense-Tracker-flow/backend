@@ -47,7 +47,7 @@ public class Transaction extends BaseAuditEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 50)
     @Builder.Default
-    private PaymentMethod paymentMethod = PaymentMethod.UPI;
+    private PaymentMethod paymentMethod = PaymentMethod.CASH;
 
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
     @Column(columnDefinition = "TEXT")

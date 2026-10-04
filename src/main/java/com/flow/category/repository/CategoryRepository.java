@@ -25,4 +25,12 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     @Query("SELECT COUNT(c) > 0 FROM Category c WHERE (c.user.id = :userId OR c.isSystem = true) AND LOWER(c.name) = LOWER(:name) AND c.type = :type")
     boolean existsByNameAndTypeForUser(@Param("userId") UUID userId, @Param("name") String name, @Param("type") CategoryType type);
+
+    @Query("SELECT c FROM Category c WHERE (c.user.id = :userId OR c.isSystem = true) AND LOWER(c.name) = 'general' AND c.type = :type ORDER BY c.isSystem ASC")
+    List<Category> findGeneralCategories(@Param("userId") UUID userId, @Param("type") CategoryType type);
+
+    default Optional<Category> findGeneralCategory(UUID userId, CategoryType type) {
+        List<Category> list = findGeneralCategories(userId, type);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+    }
 }

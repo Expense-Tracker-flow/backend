@@ -38,7 +38,7 @@ public class CreateTransactionRequest {
     private LocalDate transactionDate;
 
     @Builder.Default
-    private PaymentMethod paymentMethod = PaymentMethod.UPI;
+    private PaymentMethod paymentMethod = PaymentMethod.CASH;
 
     private String notes;
 }

@@ -1,6 +1,8 @@
 package com.flow.transaction.service;
 
 import com.flow.category.entity.Category;
+import com.flow.category.entity.CategoryType;
+import com.flow.category.repository.CategoryRepository;
 import com.flow.category.service.CategoryService;
 import com.flow.common.exception.ErrorCode;
 import com.flow.common.exception.ResourceNotFoundException;
@@ -8,6 +10,7 @@ import com.flow.common.response.PageResponse;
 import com.flow.transaction.dto.CreateTransactionRequest;
 import com.flow.transaction.dto.TransactionResponse;
 import com.flow.transaction.dto.UpdateTransactionRequest;
+import com.flow.transaction.entity.PaymentMethod;
 import com.flow.transaction.entity.Transaction;
 import com.flow.transaction.entity.TransactionType;
 import com.flow.transaction.repository.TransactionRepository;
@@ -31,6 +34,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final CategoryService categoryService;
+    private final CategoryRepository categoryRepository;
 
     @Transactional
     public TransactionResponse createTransaction(UUID userId, CreateTransactionRequest request) {
@@ -40,7 +44,13 @@ public class TransactionService {
         Category category = null;
         if (request.getCategoryId() != null) {
             category = categoryService.getCategoryEntity(request.getCategoryId(), userId);
+        } else {
+            // Default to "General" category if no category selected
+            CategoryType catType = request.getType() == TransactionType.INCOME ? CategoryType.INCOME : CategoryType.EXPENSE;
+            category = categoryRepository.findGeneralCategory(userId, catType).orElse(null);
         }
+
+        PaymentMethod paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod() : PaymentMethod.CASH;
 
         Transaction transaction = Transaction.builder()
                 .user(user)
@@ -49,7 +59,7 @@ public class TransactionService {
                 .amount(request.getAmount())
                 .description(request.getDescription().trim())
                 .transactionDate(request.getTransactionDate())
-                .paymentMethod(request.getPaymentMethod())
+                .paymentMethod(paymentMethod)
                 .notes(request.getNotes() != null ? request.getNotes().trim() : null)
                 .build();
 
