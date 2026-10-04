@@ -49,6 +49,7 @@ public class Transaction extends BaseAuditEntity {
     @Builder.Default
     private PaymentMethod paymentMethod = PaymentMethod.UPI;
 
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
     @Column(columnDefinition = "TEXT")
     private String notes;
 }

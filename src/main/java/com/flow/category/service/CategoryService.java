@@ -48,6 +48,11 @@ public class CategoryService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "User not found"));
 
+        String trimmedName = request.getName().trim();
+        if (categoryRepository.existsByNameAndTypeForUser(userId, trimmedName, request.getType())) {
+            throw new BadRequestException("A " + request.getType().name().toLowerCase() + " category named '" + trimmedName + "' already exists");
+        }
+
         Category category = Category.builder()
                 .user(user)
                 .name(request.getName().trim())

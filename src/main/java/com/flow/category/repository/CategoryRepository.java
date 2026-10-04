@@ -22,4 +22,7 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     @Query("SELECT c FROM Category c WHERE c.id = :id AND (c.user.id = :userId OR c.isSystem = true)")
     Optional<Category> findByIdAndUserAccess(@Param("id") UUID id, @Param("userId") UUID userId);
+
+    @Query("SELECT COUNT(c) > 0 FROM Category c WHERE (c.user.id = :userId OR c.isSystem = true) AND LOWER(c.name) = LOWER(:name) AND c.type = :type")
+    boolean existsByNameAndTypeForUser(@Param("userId") UUID userId, @Param("name") String name, @Param("type") CategoryType type);
 }
