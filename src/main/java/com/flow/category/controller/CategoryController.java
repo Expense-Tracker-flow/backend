@@ -53,6 +53,18 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Category created successfully", response));
     }
 
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a custom category for the authenticated user")
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        UUID userId = resolveUserId(principal, authHeader);
+        categoryService.deleteCategory(id, userId);
+        return ResponseEntity.ok(ApiResponse.ok("Category deleted successfully", null));
+    }
+
     private UUID resolveUserId(UserPrincipal principal, String authHeader) {
         if (principal != null && principal.getId() != null) {
             return principal.getId();
