@@ -35,6 +35,10 @@ public class EmailOtp {
     @Builder.Default
     private boolean verified = false;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private int attempts = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();

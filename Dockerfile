@@ -14,4 +14,4 @@ COPY --from=builder /app/target/flow-backend-0.0.1-SNAPSHOT.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Xmx350m", "-XX:+UseSerialGC", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xms96m", "-Xmx200m", "-XX:+UseSerialGC", "-XX:MaxMetaspaceSize=80m", "-Xss256k", "-jar", "app.jar"]

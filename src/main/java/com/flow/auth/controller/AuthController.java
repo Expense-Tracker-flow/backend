@@ -46,6 +46,20 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok("Email verified successfully", verified));
     }
 
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Email a password reset code. Returns the same response whether or not the account exists")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestPasswordReset(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.ok("If an account exists for this email, a reset code has been sent", null));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using the 6-digit code sent by email")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.ok("Password reset successfully. Please sign in with your new password.", null));
+    }
+
     @PostMapping("/register")
     @Operation(summary = "Register a new user and receive access and refresh tokens")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {

@@ -25,6 +25,12 @@ import java.time.temporal.ChronoUnit;
 @RequiredArgsConstructor
 public class EmailOtpService {
 
+    static final String PURPOSE_PASSWORD_RESET = "PASSWORD_RESET";
+
+    private static final int OTP_EXPIRY_MINUTES = 5;
+    private static final int MAX_VERIFY_ATTEMPTS = 5;
+    private static final long RESEND_COOLDOWN_SECONDS = 60;
+
     private final EmailOtpRepository emailOtpRepository;
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
@@ -32,8 +38,6 @@ public class EmailOtpService {
 
     @Value("${spring.mail.username:uksayoojjayarajan@gmail.com}")
     private String fromEmail;
-
-    private static final int OTP_EXPIRY_MINUTES = 5;
 
     @Transactional
     public void sendOtp(SendOtpRequest request) {
@@ -45,7 +49,28 @@ public class EmailOtpService {
             throw new BadRequestException(ErrorCode.USER_ALREADY_EXISTS, "An account with this email address already exists. Please sign in.");
         }
 
-        // 2. Generate secure 6-digit numeric OTP
+        issueOtp(email, purpose);
+    }
+
+    /**
+     * Sends a password reset code. Callers must check the account exists first; this method does not.
+     * Skips sending if a code was issued within the cooldown window.
+     */
+    @Transactional
+    public void issuePasswordResetOtp(String email) {
+        boolean recentlySent = emailOtpRepository.findTopByEmailAndPurposeOrderByCreatedAtDesc(email, PURPOSE_PASSWORD_RESET)
+                .map(otp -> otp.getCreatedAt().isAfter(Instant.now().minusSeconds(RESEND_COOLDOWN_SECONDS)))
+                .orElse(false);
+
+        if (recentlySent) {
+            log.info("Password reset code for [{}] was issued within the last {}s; not sending another", email, RESEND_COOLDOWN_SECONDS);
+            return;
+        }
+        issueOtp(email, PURPOSE_PASSWORD_RESET);
+    }
+
+    private void issueOtp(String email, String purpose) {
+        // Generate secure 6-digit numeric OTP
         int number = secureRandom.nextInt(900000) + 100000;
         String otpCode = String.valueOf(number);
 
@@ -61,12 +86,14 @@ public class EmailOtpService {
 
         emailOtpRepository.save(emailOtp);
 
-        // 3. Log OTP clearly
-        log.info("=================================================");
-        log.info("📧 FLOW EMAIL OTP FOR [{}]: [{}] (Expires in {}m)", email, otpCode, OTP_EXPIRY_MINUTES);
-        log.info("=================================================");
+        // Reset codes grant account access, so they are never written to logs
+        if (!PURPOSE_PASSWORD_RESET.equals(purpose)) {
+            log.info("=================================================");
+            log.info("📧 FLOW EMAIL OTP FOR [{}]: [{}] (Expires in {}m)", email, otpCode, OTP_EXPIRY_MINUTES);
+            log.info("=================================================");
+        }
 
-        // 4. Send Email via SMTP
+        // Send Email via SMTP
         sendEmail(email, otpCode, purpose);
     }
 
@@ -74,6 +101,8 @@ public class EmailOtpService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            String purposeLabel = PURPOSE_PASSWORD_RESET.equals(purpose) ? "password reset" : purpose;
 
             helper.setFrom(fromEmail, "FLOW Finance");
             helper.setTo(toEmail);
@@ -94,7 +123,7 @@ public class EmailOtpService {
                         If you did not request this verification code, you can safely ignore this email.
                     </p>
                 </div>
-            """.formatted(purpose, otpCode);
+            """.formatted(purposeLabel, otpCode);
 
             helper.setText(htmlContent, true);
             mailSender.send(message);
@@ -128,10 +157,36 @@ public class EmailOtpService {
         return true;
     }
 
+    /**
+     * Checks a password reset code. Returns false for a wrong code, an expired code, or too many attempts.
+     * Returns instead of throwing so the failed-attempt count is committed to the database.
+     */
+    @Transactional
+    public boolean checkPasswordResetOtp(String email, String otpCode) {
+        return emailOtpRepository.findTopByEmailAndPurposeOrderByCreatedAtDesc(email, PURPOSE_PASSWORD_RESET)
+                .map(emailOtp -> {
+                    if (emailOtp.isExpired() || emailOtp.getAttempts() >= MAX_VERIFY_ATTEMPTS) {
+                        return false;
+                    }
+                    if (emailOtp.getOtpCode().equals(otpCode)) {
+                        return true;
+                    }
+                    emailOtp.setAttempts(emailOtp.getAttempts() + 1);
+                    emailOtpRepository.save(emailOtp);
+                    return false;
+                })
+                .orElse(false);
+    }
+
+    @Transactional
+    public void deletePasswordResetOtps(String email) {
+        emailOtpRepository.deleteByEmailAndPurpose(email, PURPOSE_PASSWORD_RESET);
+    }
+
     @Transactional(readOnly = true)
     public void validateEmailIsVerified(String email, String purpose, String otpCode) {
         String cleanEmail = email.trim().toLowerCase();
-        
+
         // If otpCode is provided directly, verify it
         if (otpCode != null && !otpCode.isBlank()) {
             verifyOtp(VerifyOtpRequest.builder()

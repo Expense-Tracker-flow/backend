@@ -4,6 +4,7 @@ import com.flow.auth.dto.*;
 import com.flow.auth.entity.RefreshToken;
 import com.flow.auth.jwt.JwtService;
 import com.flow.auth.security.UserPrincipal;
+import com.flow.common.exception.ApiException;
 import com.flow.common.exception.BadRequestException;
 import com.flow.common.exception.ErrorCode;
 import com.flow.user.entity.User;
@@ -100,6 +101,40 @@ public class AuthService {
                 .expiresIn(jwtService.getAccessTokenExpiration() / 1000)
                 .user(UserProfileResponse.from(user))
                 .build();
+    }
+
+    /**
+     * Sends a reset code only when the account exists. The caller returns the same response either way,
+     * so this method never reveals whether an email is registered.
+     */
+    @Transactional
+    public void requestPasswordReset(String email) {
+        String normalizedEmail = email.trim().toLowerCase();
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            emailOtpService.issuePasswordResetOtp(normalizedEmail);
+        }
+    }
+
+    // Keeps failed-attempt counts committed when the code is wrong (the exception is still returned to the client)
+    @Transactional(noRollbackFor = ApiException.class)
+    public void resetPassword(ResetPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        String invalidCodeMessage = "Invalid or expired verification code. Please request a new one.";
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException(ErrorCode.INVALID_REQUEST, invalidCodeMessage));
+
+        if (!emailOtpService.checkPasswordResetOtp(email, request.getOtpCode().trim())) {
+            throw new BadRequestException(ErrorCode.INVALID_REQUEST, invalidCodeMessage);
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Sign out every existing session so a stolen refresh token stops working
+        refreshTokenService.revokeAllForUser(user);
+        emailOtpService.deletePasswordResetOtps(email);
+        log.info("Password reset completed for user id: {}", user.getId());
     }
 
     @Transactional

@@ -13,4 +13,6 @@ public interface EmailOtpRepository extends JpaRepository<EmailOtp, UUID> {
     Optional<EmailOtp> findTopByEmailAndPurposeOrderByCreatedAtDesc(String email, String purpose);
 
     void deleteByEmail(String email);
+
+    void deleteByEmailAndPurpose(String email, String purpose);
 }
