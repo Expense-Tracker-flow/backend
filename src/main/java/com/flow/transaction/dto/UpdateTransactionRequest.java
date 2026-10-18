@@ -31,7 +31,7 @@ public class UpdateTransactionRequest {
 
     private LocalDate transactionDate;
 
-    private PaymentMethod paymentMethod;
+    private String paymentMethod;
 
     private String notes;
 }

@@ -25,7 +25,7 @@ public class TransactionResponse {
     private String description;
     private CategoryResponse category;
     private LocalDate transactionDate;
-    private PaymentMethod paymentMethod;
+    private String paymentMethod;
     private String notes;
     private Instant createdAt;
 

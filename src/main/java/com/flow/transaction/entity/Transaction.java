@@ -44,10 +44,10 @@ public class Transaction extends BaseAuditEntity {
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
 
-    @Enumerated(EnumType.STRING)
+    // Built-in code (UPI, CASH, ...) or the id of a user's custom payment type
     @Column(name = "payment_method", nullable = false, length = 50)
     @Builder.Default
-    private PaymentMethod paymentMethod = PaymentMethod.CASH;
+    private String paymentMethod = PaymentMethod.CASH.name();
 
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.VARCHAR)
     @Column(columnDefinition = "TEXT")

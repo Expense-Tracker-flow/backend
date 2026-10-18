@@ -39,6 +39,7 @@ public class TransactionService {
     private final CategoryService categoryService;
     private final CategoryRepository categoryRepository;
     private final TransactionTextParser transactionTextParser;
+    private final PaymentTypeService paymentTypeService;
 
     /**
      * Reads a sentence into a draft. Nothing is saved; the user confirms the draft and then calls create.
@@ -63,7 +64,7 @@ public class TransactionService {
             category = categoryRepository.findGeneralCategory(userId, catType).orElse(null);
         }
 
-        PaymentMethod paymentMethod = request.getPaymentMethod() != null ? request.getPaymentMethod() : PaymentMethod.CASH;
+        String paymentMethod = paymentTypeService.validate(userId, request.getPaymentMethod());
 
         Transaction transaction = Transaction.builder()
                 .user(user)
@@ -128,7 +129,7 @@ public class TransactionService {
             transaction.setTransactionDate(request.getTransactionDate());
         }
         if (request.getPaymentMethod() != null) {
-            transaction.setPaymentMethod(request.getPaymentMethod());
+            transaction.setPaymentMethod(paymentTypeService.validate(userId, request.getPaymentMethod()));
         }
         if (request.getNotes() != null) {
             transaction.setNotes(request.getNotes().trim());

@@ -42,6 +42,9 @@ class TransactionServiceTest {
     @Mock
     private CategoryService categoryService;
 
+    @Mock
+    private PaymentTypeService paymentTypeService;
+
     @InjectMocks
     private TransactionService transactionService;
 
@@ -78,7 +81,7 @@ class TransactionServiceTest {
                 .description("Dinner with friends")
                 .categoryId(categoryId)
                 .transactionDate(LocalDate.now())
-                .paymentMethod(PaymentMethod.UPI)
+                .paymentMethod(PaymentMethod.UPI.name())
                 .notes("Splits with Alice")
                 .build();
 
@@ -93,7 +96,7 @@ class TransactionServiceTest {
                 .amount(new BigDecimal("450.50"))
                 .description("Dinner with friends")
                 .transactionDate(LocalDate.now())
-                .paymentMethod(PaymentMethod.UPI)
+                .paymentMethod(PaymentMethod.UPI.name())
                 .notes("Splits with Alice")
                 .build();
 
