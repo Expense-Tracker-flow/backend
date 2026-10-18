@@ -1,5 +1,6 @@
 package com.flow.transaction.service;
 
+import com.flow.category.dto.CategoryResponse;
 import com.flow.category.entity.Category;
 import com.flow.category.entity.CategoryType;
 import com.flow.category.repository.CategoryRepository;
@@ -8,6 +9,7 @@ import com.flow.common.exception.ErrorCode;
 import com.flow.common.exception.ResourceNotFoundException;
 import com.flow.common.response.PageResponse;
 import com.flow.transaction.dto.CreateTransactionRequest;
+import com.flow.transaction.dto.ParsedTransactionResponse;
 import com.flow.transaction.dto.TransactionResponse;
 import com.flow.transaction.dto.UpdateTransactionRequest;
 import com.flow.transaction.entity.PaymentMethod;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -35,6 +38,16 @@ public class TransactionService {
     private final UserRepository userRepository;
     private final CategoryService categoryService;
     private final CategoryRepository categoryRepository;
+    private final TransactionTextParser transactionTextParser;
+
+    /**
+     * Reads a sentence into a draft. Nothing is saved; the user confirms the draft and then calls create.
+     */
+    @Transactional(readOnly = true)
+    public ParsedTransactionResponse parseText(UUID userId, String text, LocalDate today) {
+        List<CategoryResponse> categories = categoryService.getCategories(userId, null);
+        return transactionTextParser.parse(text, categories, today != null ? today : LocalDate.now());
+    }
 
     @Transactional
     public TransactionResponse createTransaction(UUID userId, CreateTransactionRequest request) {

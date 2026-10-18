@@ -6,6 +6,8 @@ import com.flow.common.exception.UnauthorizedException;
 import com.flow.common.response.ApiResponse;
 import com.flow.common.response.PageResponse;
 import com.flow.transaction.dto.CreateTransactionRequest;
+import com.flow.transaction.dto.ParseTransactionRequest;
+import com.flow.transaction.dto.ParsedTransactionResponse;
 import com.flow.transaction.dto.TransactionResponse;
 import com.flow.transaction.dto.UpdateTransactionRequest;
 import com.flow.transaction.entity.TransactionType;
@@ -34,6 +36,17 @@ public class TransactionController {
 
     private final TransactionService transactionService;
     private final JwtService jwtService;
+
+    @PostMapping("/parse")
+    @Operation(summary = "Read a sentence into a draft transaction. Does not save anything")
+    public ResponseEntity<ApiResponse<ParsedTransactionResponse>> parse(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Valid @RequestBody ParseTransactionRequest request
+    ) {
+        UUID userId = resolveUserId(principal, authHeader);
+        return ResponseEntity.ok(ApiResponse.ok(transactionService.parseText(userId, request.getText(), request.getToday())));
+    }
 
     @PostMapping
     @Operation(summary = "Create a new expense or income transaction")
