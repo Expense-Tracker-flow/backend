@@ -79,6 +79,25 @@ public class PushSender {
     @Async
     @Transactional
     public void sendToUser(UUID userId, String title, String body) {
+        send(userId, Map.of("title", title, "body", body, "url", "/"));
+    }
+
+    /**
+     * Sends a payment reminder. The alert has an "Add expense" button that opens the app and logs the payment.
+     * Browsers without notification buttons (for example iPhone) still open the app from the alert.
+     */
+    @Async
+    @Transactional
+    public void sendReminderToUser(UUID userId, String title, String body, UUID reminderId) {
+        send(userId, Map.of(
+                "title", title,
+                "body", body,
+                "url", "/",
+                "actionUrl", "/?addReminder=" + reminderId,
+                "actions", List.of(Map.of("action", "add-expense", "title", "Add expense"))));
+    }
+
+    private void send(UUID userId, Map<String, Object> data) {
         if (pushService == null) {
             return;
         }
@@ -89,7 +108,7 @@ public class PushSender {
 
         String payload;
         try {
-            payload = objectMapper.writeValueAsString(Map.of("title", title, "body", body, "url", "/"));
+            payload = objectMapper.writeValueAsString(data);
         } catch (Exception e) {
             log.warn("Could not build push payload: {}", e.getMessage());
             return;
