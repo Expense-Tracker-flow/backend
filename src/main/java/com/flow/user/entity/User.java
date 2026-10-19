@@ -31,4 +31,9 @@ public class User extends BaseAuditEntity {
     @Builder.Default
     @Column(nullable = false, length = 10)
     private String currency = "INR";
+
+    // IANA zone name such as "Asia/Kolkata", used to send reminders at the user's local evening
+    @Builder.Default
+    @Column(nullable = false, length = 64)
+    private String timezone = "UTC";
 }

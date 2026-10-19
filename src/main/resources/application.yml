@@ -58,6 +58,11 @@ flow:
     secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
     access-token-expiration-ms: 86400000 # 24 hours (86400000 ms)
     refresh-token-expiration-ms: 604800000 # 7 days (7 * 24 * 60 * 60 * 1000)
+  push:
+    # Web Push keys for phone notifications. Leave blank to turn the feature off.
+    vapid-public-key: ${VAPID_PUBLIC_KEY:}
+    vapid-private-key: ${VAPID_PRIVATE_KEY:}
+    vapid-subject: ${VAPID_SUBJECT:mailto:uksayoojjayarajan@gmail.com}
   cors:
     allowed-origins: "${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001,http://localhost:3002,http://127.0.0.1:3000,https://*.vercel.app,https://*.workers.dev,https://*.pages.dev,https://frontend.uksayoojjayarajan.workers.dev,https://frontend-lilac-iota-37.vercel.app}"
 

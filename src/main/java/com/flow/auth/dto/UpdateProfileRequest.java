@@ -17,4 +17,7 @@ public class UpdateProfileRequest {
 
     @Size(min = 1, max = 10, message = "Currency code must be valid")
     private String currency;
+
+    @Size(min = 1, max = 64, message = "Timezone must be valid")
+    private String timezone;
 }

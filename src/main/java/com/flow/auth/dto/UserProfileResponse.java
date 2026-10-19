@@ -18,6 +18,7 @@ public class UserProfileResponse {
     private String email;
     private String fullName;
     private String currency;
+    private String timezone;
     private Instant createdAt;
 
     public static UserProfileResponse from(User user) {
@@ -26,6 +27,7 @@ public class UserProfileResponse {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .currency(user.getCurrency())
+                .timezone(user.getTimezone())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

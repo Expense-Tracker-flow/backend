@@ -120,6 +120,13 @@ public class AuthController {
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
             user.setFullName(request.getFullName().trim());
         }
+        if (request.getTimezone() != null && !request.getTimezone().isBlank()) {
+            try {
+                user.setTimezone(java.time.ZoneId.of(request.getTimezone().trim()).getId());
+            } catch (java.time.DateTimeException e) {
+                throw new com.flow.common.exception.BadRequestException("Unknown timezone: " + request.getTimezone());
+            }
+        }
         if (request.getCurrency() != null && !request.getCurrency().isBlank()) {
             user.setCurrency(request.getCurrency().trim().toUpperCase());
         }
